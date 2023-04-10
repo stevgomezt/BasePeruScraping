@@ -12,7 +12,8 @@
         "guzzlehttp/guzzle": "^7.0",
         "laravel/framework": "^8.40",
         "laravel/tinker": "^2.5",
-        "phar-io/version": "^3.2"
+        "phar-io/version": "^3.2",
+        "symfony/dom-crawler": "^5.0"
     },
     "require-dev": {
         "facade/ignition": "^2.5",

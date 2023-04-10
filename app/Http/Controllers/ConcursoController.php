@@ -21,10 +21,8 @@ class ConcursoController extends Controller
         $data = $model->getCookies($url);
         $cookie = $data['cookies'];
         $view_state = $data['view_state'];
-
         // dd($view_state);
         // dd(urlencode($view_state));
-
         $image_captcha = $model->getCaptchaCode($cookie)[0];
         return view('concursos.scrapping', compact('image_captcha', 'cookie', 'view_state'));
     }
@@ -80,6 +78,6 @@ class ConcursoController extends Controller
     {
         $url = 'http://procesos.seace.gob.pe/seacebus-uiwd-pub/buscadorPublico/buscadorPublico.xhtml';
         $model = new Concurso;
-        $model->AllRequest($url, $request->cookie, $request->captcha, $request->convocatoria, $request->tb_ficha);
+        $model->AllRequest($url, $request->cookie,$request->view_state, $request->captcha, $request->convocatoria, $request->tb_ficha);
     }
 }
