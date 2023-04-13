@@ -15,7 +15,7 @@
             margin: unset;
             background-color: unset;
             transition: unset;
-        } 
+        }
     </style>
 </head>
 <body>

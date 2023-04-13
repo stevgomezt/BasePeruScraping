@@ -19,7 +19,7 @@
         <label for="busquedaInput">Buscar por palabra clave:</label>
         <input class="busqueda form-control" id="busquedaInput" type="text" placeholder="Escribir palabra clave" />
     </div>
-    
+
     <div style="overflow-x:auto;" class="row col-12">
         <table class="table table-bordered">
             <tr>
@@ -62,6 +62,6 @@
         <div class="alert alert-alert">Start Adding to the Database.</div>
     @endif
 
-    
+
 
 @endsection
