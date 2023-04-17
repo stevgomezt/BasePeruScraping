@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+set_time_limit(0);
+
 use App\Models\Concurso;
 use App\Models\DetalleConcurso;
 use DateTime;
@@ -203,7 +205,7 @@ class ConcursoController extends Controller
 
         $paginator = "";
         $view = $crawler->filterXPath("//div[contains(@id,'tbBuscador:idFormBuscarProceso:dtProcesos_paginator_bottom')]/span[1]")->each(function ($node) use (&$paginator) {
-            $paginator = $this->textValidation($node);
+            $paginator = $this->textValidationPag($node);
         });
 
         $find_total_page = "1/";
@@ -211,7 +213,11 @@ class ConcursoController extends Controller
         $total_page = substr($paginator, $pos_total_page, 3);
         $total_page = str_replace(' ', '', $total_page);
         $total_page = str_replace(']', '', $total_page);
-        // echo $total_page;
+
+        echo ('</br>');
+        echo $total_page;
+        echo ('</br>');
+
         $data = array();
         $crawler->filter('table[id="tbBuscador:idFormBuscarProceso:pnlGrdResultadosProcesos"] tbody tbody tr')->each(function ($node) use (&$data, &$url, &$cookies, &$fecha_inicio, &$fecha_final, &$view_state_post_contratos) {
             $model = new Concurso;
@@ -341,7 +347,7 @@ class ConcursoController extends Controller
                         'Cookie' => $cookies,
                     ),
                 )));
-                $crawler = $client->request('GET', $url);
+                $crawler = $client->request('GET', 'http://procesos.seace.gob.pe/seacebus-uiwd-pub/buscadorPublico/buscadorPublico.xhtml');
                 $crawler->filter('table[id="tbBuscador:idFormBuscarProceso:pnlGrdResultadosProcesos"] tbody tbody tr')->each(function ($node) use (&$url, &$cookies, &$fecha_inicio, &$fecha_final, &$view_state_post_contratos) {
                     $model = new Concurso;
                     $model->acciones = $this->textValidation($node, 'td:nth-child(13) a:nth-child(1)', 'onclick');
@@ -445,18 +451,17 @@ class ConcursoController extends Controller
         return $datetime->format('d/m/Y');
     }
 
-    public function textValidation($node, $selector = "", $attr = null)
+    public function textValidationPag($node, $selector = "", $attr = null)
     {
+
         if ($selector == "") {
             if (is_null($attr)) {
-                // Si no se especifica ningún atributo, devolver el texto del nodo si existe
                 if ($node->count()) {
                     return $node->text();
                 } else {
                     return "";
                 }
             } else {
-                // Si se especifica un atributo, devolver el valor del atributo si existe
                 if ($node->count()) {
                     if ($node->attr($attr) == "") {
                         return $node->attr("href");
@@ -467,15 +472,52 @@ class ConcursoController extends Controller
                 }
             }
         }
+
         if (!is_null($attr)) {
-            // Si se especifica un selector y un atributo, devolver el valor del atributo si existe
             if ($node->filter($selector)->count()) {
                 return $node->filter($selector)->attr($attr);
             } else {
                 return '';
             }
         }
-        // Si se especifica solo un selector, devolver el texto del nodo si existe
+
+        if ($node->filter($selector)->count()) {
+            return $node->filter($selector)->text();
+        } else {
+            return '';
+        }
+    }
+
+    public function textValidation($node, $selector = "", $attr = null)
+    {
+
+        if ($selector == "") {
+            if (is_null($attr)) {
+                if ($node->count()) {
+                    return $node->text();
+                } else {
+                    return "";
+                }
+            } else {
+                if ($node->count()) {
+                    if ($node->attr($attr) == "") {
+                        return $node->attr("href");
+                    }
+                    return $node->attr($attr);
+                } else {
+                    return "";
+                }
+            }
+        }
+
+        if (!is_null($attr)) {
+            if ($node->filter($selector)->count()) {
+                return $node->filter($selector)->attr($attr);
+            } else {
+                return '';
+            }
+        }
+
         if ($node->filter($selector)->count()) {
             return $node->filter($selector)->text();
         } else {
@@ -494,6 +536,7 @@ class ConcursoController extends Controller
 
     public function saveDetail($model, $fecha_inicio, $fecha_final, $cookies, $view_state)
     {
+        // set_time_limit(0);
         $proceso = $model->proceso;
         $convocatoria = $model->convocatoria;
 
@@ -567,13 +610,17 @@ class ConcursoController extends Controller
         ));
         $response = curl_exec($curl);
         curl_close($curl);
-        echo $response;
+        // echo $response;
+        // $key = $this->textValidation($node, 'td:nth-child(1)');
+        // $value = $this->textValidation($node, 'td:nth-child(2)');
 
         $crawler = new Crawler($response);
         //Información General
         $crawler->filterXpath("//fieldset/legend[contains(text(),'Convocatoria')]//following-sibling::div/table/tbody/tr[2]/td/table/tbody/tr")->each(function ($node) use (&$convocatoria) {
-            $key = $this->textValidation($node, 'td:nth-child(1)');
-            $value = $this->textValidation($node, 'td:nth-child(2)');
+            // $key = $this->textValidation($node, 'td:nth-child(1)');
+            // $value = $this->textValidation($node, 'td:nth-child(2)');
+            $key = 'Key';
+            $value = 'value';
             $model = new DetalleConcurso;
             $model->key = $key;
             $model->value = $value;
@@ -582,69 +629,70 @@ class ConcursoController extends Controller
             $model->save();
             echo "Guardando Información General - Convocatoria: " . $convocatoria . "<br>";
         });
+
         // // Información general de la Entidad
-        $crawler->filterXpath("//fieldset/legend[contains(text(),'Convocatoria')]//following-sibling::div/table/tbody/tr[6]/td/table/tbody/tr")->each(function ($node) use (&$convocatoria) {
-            $key = $this->textValidation($node, 'td:nth-child(1)');
-            $value = $this->textValidation($node, 'td:nth-child(2)');
-            $model = new DetalleConcurso;
-            $model->key = $key;
-            $model->value = $value;
-            $model->convocatoria = $convocatoria;
-            $model->tipo_id = 2;
-            $model->save();
-            echo "Guardando Información general de la Entidad - Convocatoria: " . $convocatoria . "<br>";
-        });
-        // //Información general del procedimiento
-        $crawler->filterXpath("//fieldset/legend[contains(text(),'Convocatoria')]//following-sibling::div/table/tbody/tr[9]/td/table/tbody/tr")->each(function ($node) use (&$convocatoria) {
-            $key = $this->textValidation($node, 'td:nth-child(1)');
-            $value = $this->textValidation($node, 'td:nth-child(2)');
-            $model = new DetalleConcurso;
-            $model->key = $key;
-            $model->value = $value;
-            $model->convocatoria = $convocatoria;
-            $model->tipo_id = 3;
-            $model->save();
-            echo "Guardando Información general del procedimiento - Convocatoria: " . $convocatoria . "<br>";
-        });
+        // $crawler->filterXpath("//fieldset/legend[contains(text(),'Convocatoria')]//following-sibling::div/table/tbody/tr[6]/td/table/tbody/tr")->each(function ($node) use (&$convocatoria) {
+        //     $key = $this->textValidation($node, 'td:nth-child(1)');
+        //     $value = $this->textValidation($node, 'td:nth-child(2)');
+        //     $model = new DetalleConcurso;
+        //     $model->key = $key;
+        //     $model->value = $value;
+        //     $model->convocatoria = $convocatoria;
+        //     $model->tipo_id = 2;
+        //     $model->save();
+        //     echo "Guardando Información general de la Entidad - Convocatoria: " . $convocatoria . "<br>";
+        // });
+        // // Información general del procedimiento
+        // $crawler->filterXpath("//fieldset/legend[contains(text(),'Convocatoria')]//following-sibling::div/table/tbody/tr[9]/td/table/tbody/tr")->each(function ($node) use (&$convocatoria) {
+        //     $key = $this->textValidation($node, 'td:nth-child(1)');
+        //     $value = $this->textValidation($node, 'td:nth-child(2)');
+        //     $model = new DetalleConcurso;
+        //     $model->key = $key;
+        //     $model->value = $value;
+        //     $model->convocatoria = $convocatoria;
+        //     $model->tipo_id = 3;
+        //     $model->save();
+        //     echo "Guardando Información general del procedimiento - Convocatoria: " . $convocatoria . "<br>";
+        // });
 
         // //Entidad Contratante
-        $crawler->filterXpath("//tbody[contains(@id,'tbFicha:dtEntidadContrata_data')]/tr")->each(function ($node) use (&$convocatoria) {
-            $key = $this->textValidation($node, 'td:nth-child(1)');
-            $value = $this->textValidation($node, 'td:nth-child(2)');
-            $model = new DetalleConcurso;
-            $model->key = $key;
-            $model->value = $value;
-            $model->convocatoria = $convocatoria;
-            $model->tipo_id = 5;
-            $model->save();
-            echo "Guardando Entidad Contratante - Convocatoria: " . $convocatoria . "<br>";
-        });
+        // $crawler->filterXpath("//tbody[contains(@id,'tbFicha:dtEntidadContrata_data')]/tr")->each(function ($node) use (&$convocatoria) {
+        //     $key = $this->textValidation($node, 'td:nth-child(1)');
+        //     $value = $this->textValidation($node, 'td:nth-child(2)');
+        //     $model = new DetalleConcurso;
+        //     $model->key = $key;
+        //     $model->value = $value;
+        //     $model->convocatoria = $convocatoria;
+        //     $model->tipo_id = 5;
+        //     $model->save();
+        //     echo "Guardando Entidad Contratante - Convocatoria: " . $convocatoria . "<br>";
+        // });
 
         // //Lista de Documentos
-        $crawler->filterXpath("//tbody[contains(@id,'tbFicha:dtDocumentos_data')]/tr")->each(function ($node) use (&$convocatoria) {
-            $key = "Lista de Documentos";
-            $nro = $this->textValidation($node, 'td:nth-child(1)');
-            $etapa = $this->textValidation($node, 'td:nth-child(2)');
-            $documento = $this->textValidation($node, 'td:nth-child(3)');
-            $archivo = $this->textValidation($node, 'td:nth-child(4)');
-            $fecha_y_hora_de_publicacion = $this->textValidation($node, 'td:nth-child(5)');
-            $acciones = $this->textValidation($node, 'td:nth-child(6)');
+        // $crawler->filterXpath("//tbody[contains(@id,'tbFicha:dtDocumentos_data')]/tr")->each(function ($node) use (&$convocatoria) {
+        //     $key = "Lista de Documentos";
+        //     $nro = $this->textValidation($node, 'td:nth-child(1)');
+        //     $etapa = $this->textValidation($node, 'td:nth-child(2)');
+        //     $documento = $this->textValidation($node, 'td:nth-child(3)');
+        //     $archivo = $this->textValidation($node, 'td:nth-child(4)');
+        //     $fecha_y_hora_de_publicacion = $this->textValidation($node, 'td:nth-child(5)');
+        //     $acciones = $this->textValidation($node, 'td:nth-child(6)');
 
-            $value["nro"] = $nro;
-            $value["etapa"] = $etapa;
-            $value["documento"] = $documento;
-            $value["archivo"] = $archivo;
-            $value["fecha_y_hora_de_publicacion"] = $fecha_y_hora_de_publicacion;
-            $value["acciones"] = $acciones;
+        //     $value["nro"] = $nro;
+        //     $value["etapa"] = $etapa;
+        //     $value["documento"] = $documento;
+        //     $value["archivo"] = $archivo;
+        //     $value["fecha_y_hora_de_publicacion"] = $fecha_y_hora_de_publicacion;
+        //     $value["acciones"] = $acciones;
 
-            $model = new DetalleConcurso;
-            $model->key = $key;
-            $model->value = json_encode($value);
-            $model->convocatoria = $convocatoria;
-            $model->tipo_id = 6;
-            $model->save();
-            echo "Guardando Lista de Documentos - Convocatoria: " . $convocatoria . "<br>";
-        });
+        //     $model = new DetalleConcurso;
+        //     $model->key = $key;
+        //     $model->value = json_encode($value);
+        //     $model->convocatoria = $convocatoria;
+        //     $model->tipo_id = 6;
+        //     $model->save();
+        //     echo "Guardando Lista de Documentos - Convocatoria: " . $convocatoria . "<br>";
+        // });
 
         sleep(3);
     }
