@@ -490,46 +490,38 @@ class ConcursoController extends Controller
 
     public function textValidation($node, $selector = "", $attr = null)
     {
-        if ($selector === "" || is_bool($selector)) {
-            return "Sin información";
-        } elseif (!is_null($attr)) {
-            if ($node->filter($selector)->count()) {
-                $string = strval($node->filter($selector)->attr($attr));
+
+        if ($selector == "") {
+            if (is_null($attr)) {
+                if ($node->count()) {
+                    return $node->text();
+                } else {
+                    return "";
+                }
             } else {
-                return "Sin información";
-            }
-        } else {
-            if ($node->filter($selector)->count()) {
-                $string = strval($node->filter($selector)->text());
-            } else {
-                return "Sin información";
+                if ($node->count()) {
+                    if ($node->attr($attr) == "") {
+                        return $node->attr("href");
+                    }
+                    return $node->attr($attr);
+                } else {
+                    return "";
+                }
             }
         }
 
-        $no_accents = strtr($string, [
-            'á' => 'a',
-            'é' => 'e',
-            'í' => 'i',
-            'ó' => 'o',
-            'ú' => 'u',
-            'Á' => 'A',
-            'É' => 'E',
-            'Í' => 'I',
-            'Ó' => 'O',
-            'Ú' => 'U',
-            'ñ' => 'n',
-            'Ñ' => 'N',
-            'ü' => 'u',
-            'Ü' => 'U',
-            '°' => '',
-        ]);
+        if (!is_null($attr)) {
+            if ($node->filter($selector)->count()) {
+                return $node->filter($selector)->attr($attr);
+            } else {
+                return '';
+            }
+        }
 
-        $ascii = preg_replace('/[^\x{0000}-\x{007F}]/u', '', $no_accents);
-
-        if (is_bool($ascii)) {
-            return null;
+        if ($node->filter($selector)->count()) {
+            return $node->filter($selector)->text();
         } else {
-            return $ascii;
+            return '';
         }
     }
 
@@ -622,70 +614,89 @@ class ConcursoController extends Controller
 
         $crawler = new Crawler($response);
 
+        Información General
+        if ($crawler->count() == 0 || is_bool($crawler)) {
+            $key = 'Sin informacion key';
+            $value = 'Sin informacion value';
+        } else {
+            $crawler->filterXpath("//fieldset/legend[contains(text(),'Convocatoria')]//following-sibling::div/table/tbody/tr[2]/td/table/tbody/tr")->each(function ($node) use (&$convocatoria) {
+                // $key = $this->textValidation($node, 'td:nth-child(1)');
+                // $value = $this->textValidation($node, 'td:nth-child(2)');
+                $key = 'Key';
+                $value = 'value';
+                $model = new DetalleConcurso;
+                $model->key = $key;
+                $model->value = $value;
+                $model->convocatoria = $convocatoria;
+                $model->tipo_id = 1;
+                $model->save();
+                echo "Guardando Información General - Convocatoria: " . $convocatoria . "<br>";
+            });
+        }
+
         // // Información general de la Entidad
-        $crawler->filterXpath("//fieldset/legend[contains(text(),'Convocatoria')]//following-sibling::div/table/tbody/tr[6]/td/table/tbody/tr")->each(function ($node) use (&$convocatoria) {
-            $key = $this->textValidation($node, 'td:nth-child(1)');
-            $value = $this->textValidation($node, 'td:nth-child(2)');
-            $model = new DetalleConcurso;
-            $model->key = $key;
-            $model->value = $value;
-            $model->convocatoria = $convocatoria;
-            $model->tipo_id = 2;
-            $model->save();
-            echo "Guardando Información general de la Entidad - Convocatoria: " . $convocatoria . "<br>";
-        });
+        // $crawler->filterXpath("//fieldset/legend[contains(text(),'Convocatoria')]//following-sibling::div/table/tbody/tr[6]/td/table/tbody/tr")->each(function ($node) use (&$convocatoria) {
+        //     $key = $this->textValidation($node, 'td:nth-child(1)');
+        //     $value = $this->textValidation($node, 'td:nth-child(2)');
+        //     $model = new DetalleConcurso;
+        //     $model->key = $key;
+        //     $model->value = $value;
+        //     $model->convocatoria = $convocatoria;
+        //     $model->tipo_id = 2;
+        //     $model->save();
+        //     echo "Guardando Información general de la Entidad - Convocatoria: " . $convocatoria . "<br>";
+        // });
         // // Información general del procedimiento
-        $crawler->filterXpath("//fieldset/legend[contains(text(),'Convocatoria')]//following-sibling::div/table/tbody/tr[9]/td/table/tbody/tr")->each(function ($node) use (&$convocatoria) {
-            $key = $this->textValidation($node, 'td:nth-child(1)');
-            $value = $this->textValidation($node, 'td:nth-child(2)');
-            $model = new DetalleConcurso;
-            $model->key = $key;
-            $model->value = $value;
-            $model->convocatoria = $convocatoria;
-            $model->tipo_id = 3;
-            $model->save();
-            echo "Guardando Información general del procedimiento - Convocatoria: " . $convocatoria . "<br>";
-        });
+        // $crawler->filterXpath("//fieldset/legend[contains(text(),'Convocatoria')]//following-sibling::div/table/tbody/tr[9]/td/table/tbody/tr")->each(function ($node) use (&$convocatoria) {
+        //     $key = $this->textValidation($node, 'td:nth-child(1)');
+        //     $value = $this->textValidation($node, 'td:nth-child(2)');
+        //     $model = new DetalleConcurso;
+        //     $model->key = $key;
+        //     $model->value = $value;
+        //     $model->convocatoria = $convocatoria;
+        //     $model->tipo_id = 3;
+        //     $model->save();
+        //     echo "Guardando Información general del procedimiento - Convocatoria: " . $convocatoria . "<br>";
+        // });
 
-        // // Lista de Documentos
-        $crawler->filterXpath("//tbody[contains(@id,'tbFicha:dtDocumentos_data')]/tr")->each(function ($node) use (&$convocatoria) {
-            $key = "Lista de Documentos";
-            $nro = $this->textValidation($node, 'td:nth-child(1)');
-            $etapa = $this->textValidation($node, 'td:nth-child(2)');
-            $documento = $this->textValidation($node, 'td:nth-child(3)');
-            $archivo = $this->textValidation($node, 'td:nth-child(4) a:nth-child(1)', 'onclick');
+        // //Entidad Contratante
+        // $crawler->filterXpath("//tbody[contains(@id,'tbFicha:dtEntidadContrata_data')]/tr")->each(function ($node) use (&$convocatoria) {
+        //     $key = $this->textValidation($node, 'td:nth-child(1)');
+        //     $value = $this->textValidation($node, 'td:nth-child(2)');
+        //     $model = new DetalleConcurso;
+        //     $model->key = $key;
+        //     $model->value = $value;
+        //     $model->convocatoria = $convocatoria;
+        //     $model->tipo_id = 5;
+        //     $model->save();
+        //     echo "Guardando Entidad Contratante - Convocatoria: " . $convocatoria . "<br>";
+        // });
 
-            // Obtener el texto dentro del primer paréntesis
-            $pos_inicio = strpos($archivo, '(') + 1;
-            $pos_fin = strpos($archivo, ')', $pos_inicio);
-            $primer_parentesis = substr($archivo, $pos_inicio, $pos_fin - $pos_inicio);
-            // Obtener los valores de las posiciones 0 y 2 del array
-            $valores = explode(',', $primer_parentesis);
-            $valor_concatenado = $valores[0] . '/' . $valores[2];
-            // Eliminar las comillas simples del resultado y reemplazar los espacios en blanco con guiones bajos
-            $valor_concatenado = str_replace("'", "", $valor_concatenado);
-            $valor_concatenado = str_replace(" ", "_", $valor_concatenado);
+        //Lista de Documentos
+        // $crawler->filterXpath("//tbody[contains(@id,'tbFicha:dtDocumentos_data')]/tr")->each(function ($node) use (&$convocatoria) {
+        //     $key = "Lista de Documentos";
+        //     $nro = $this->textValidation($node, 'td:nth-child(1)');
+        //     $etapa = $this->textValidation($node, 'td:nth-child(2)');
+        //     $documento = $this->textValidation($node, 'td:nth-child(3)');
+        //     $archivo = $this->textValidation($node, 'td:nth-child(4)');
+        //     $fecha_y_hora_de_publicacion = $this->textValidation($node, 'td:nth-child(5)');
+        //     $acciones = $this->textValidation($node, 'td:nth-child(6)');
 
-            $archivo = 'http://prodcont.seace.gob.pe/alfresco/d/a/workspace/SpacesStore/' . $valor_concatenado;
+        //     $value["nro"] = $nro;
+        //     $value["etapa"] = $etapa;
+        //     $value["documento"] = $documento;
+        //     $value["archivo"] = $archivo;
+        //     $value["fecha_y_hora_de_publicacion"] = $fecha_y_hora_de_publicacion;
+        //     $value["acciones"] = $acciones;
 
-            $fecha_y_hora_de_publicacion = $this->textValidation($node, 'td:nth-child(5)');
-            $acciones = $this->textValidation($node, 'td:nth-child(6)');
-
-            $value["nro"] = $nro;
-            $value["etapa"] = $etapa;
-            $value["documento"] = $documento;
-            $value["archivo"] = $archivo;
-            $value["fecha_y_hora_de_publicacion"] = $fecha_y_hora_de_publicacion;
-            $value["acciones"] = $acciones;
-
-            $model = new DetalleConcurso;
-            $model->key = $key;
-            $model->value = json_encode($value);
-            $model->convocatoria = $convocatoria;
-            $model->tipo_id = 6;
-            $model->save();
-            echo "Guardando Lista de Documentos - Convocatoria: " . $convocatoria . "<br>";
-        });
+        //     $model = new DetalleConcurso;
+        //     $model->key = $key;
+        //     $model->value = json_encode($value);
+        //     $model->convocatoria = $convocatoria;
+        //     $model->tipo_id = 6;
+        //     $model->save();
+        //     echo "Guardando Lista de Documentos - Convocatoria: " . $convocatoria . "<br>";
+        // });
 
         sleep(3);
     }

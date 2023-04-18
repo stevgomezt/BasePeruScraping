@@ -17,7 +17,7 @@
     @if(sizeof($concursos) > 0)
     <div class="row col-12 mb-4 mt-4">
         <label for="busquedaInput">Buscar por palabra clave:</label>
-        <input class="busqueda form-control" id="busquedaInput" type="text" placeholder="Escribir palabra clave" />
+        <input class="busqueda form-control" id="busquedaInput" type="text" placeholder="Escribir # Convocatoria" />
     </div>
 
     <div style="overflow-x:auto;" class="row col-12">
